@@ -1,0 +1,2 @@
+# AppTemplate
+Web Application Template
