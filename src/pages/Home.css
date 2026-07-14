@@ -1,0 +1,43 @@
+#splash {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 32px 20px;
+}
+
+.splash-center {
+  flex-grow: 1;
+  display: grid;
+  place-items: center;
+}
+
+.splash-logo {
+  width: 220px;
+  max-width: 60vw;
+  height: auto;
+  filter: drop-shadow(0 0 40px var(--accent-bg));
+  transition: transform 0.4s ease;
+
+  @media (max-width: 1024px) {
+    width: 160px;
+  }
+}
+
+.splash-center a:hover .splash-logo {
+  transform: scale(1.04);
+}
+
+.splash-footer {
+  text-align: center;
+  padding-top: 24px;
+
+  a {
+    color: var(--text);
+    text-decoration: none;
+
+    &:hover {
+      color: var(--accent);
+    }
+  }
+}
