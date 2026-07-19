@@ -1,4 +1,4 @@
-import { babylonLogo } from '../babylon/custom/loading';
+import { babylonLogo } from '../custom/loading';
 import { useUnifiedNavigation } from '../babylon/system/platform';
 import './Home.css'
 

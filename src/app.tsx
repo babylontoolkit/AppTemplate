@@ -1,6 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { DefaultBabylonPreloader } from './babylon/custom/loading';
+import { DefaultBabylonPreloader } from './custom/loading';
 import { ReactRouterNavAdapter } from './routing/adpter';
 import Home from './pages/Home';
 import './app.css'
