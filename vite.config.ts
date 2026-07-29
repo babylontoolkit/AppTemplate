@@ -71,7 +71,7 @@ function applyMediaContentType(req: Connect.IncomingMessage, res: { setHeader: (
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
-  base: "/", // Ensures assets are correctly referenced
+  base: "./", // Relative: the build must boot under ANY serving prefix (shares are served at /play/<id>/, never an origin root)
   build: {
     emptyOutDir: true,
     copyPublicDir: true,
@@ -151,7 +151,16 @@ export default defineConfig(({ mode }) => ({
     strictPort: true,      // fail loudly if the port is taken — never silently fall back
     host: "0.0.0.0",       // bind all interfaces — required for the Replit proxy to reach it
     port: parseInt(process.env.PORT || "5173"),  // read PORT from the workflow env var
-    open: true, // Automatically open the browser
+    // NO `open: true`. On a hosted sandbox there is no browser to open and no `xdg-open` to do it
+    // with, so it only ever produced an `xdg-open ENOENT` error on every dev-server start.
+    // The platform opens the preview itself.
+    hmr: {
+      // The hosted preview is reached over HTTPS on 443, so the HMR client must dial wss://<host>
+      // rather than the ws://<host>:<port> it would infer from the dev server's own port. Without
+      // this, HMR silently never connects and every edit needs a manual reload.
+      clientPort: 443,
+      protocol: "wss",
+    },
     // Pre-transform the entire babylon entry chain so the first /play click
     // doesn't have to crawl + optimize a half-dozen UMD packages mid-navigation.
     // Globs auto-pick up any new files you add under src/babylon/.

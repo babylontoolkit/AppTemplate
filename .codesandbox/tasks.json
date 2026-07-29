@@ -1,0 +1,19 @@
+{
+  "$schema": "https://codesandbox.io/schemas/tasks.json",
+  "setupTasks": [
+    {
+      "name": "Install dependencies",
+      "command": "npm install --no-audit --no-fund"
+    }
+  ],
+  "tasks": {
+    "dev": {
+      "name": "Dev Server",
+      "command": "npm run dev",
+      "runAtStart": false,
+      "preview": {
+        "port": 5173
+      }
+    }
+  }
+}

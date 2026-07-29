@@ -31,7 +31,11 @@ export function ReactRouterNavAdapter({ children }: { children: ReactNode }) {
         // Force a full DOM reload to release all resources from the previous page
         // and give the new scene a fresh slate.
         if (reloadPage === undefined || reloadPage === true) {
-          window.location.href = path;
+          // Resolve the app-relative path against the app's real mount point instead of the
+          // origin root: a published build is served under "/play/<shareId>/", where a
+          // root-absolute "/play" would escape the game entirely and land on the host app.
+          const appRoot = new URL(import.meta.env.BASE_URL, window.location.href);
+          window.location.href = new URL("." + path, appRoot).href;
           return;
         }
       }
