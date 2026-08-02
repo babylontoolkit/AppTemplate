@@ -1,7 +1,7 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { DefaultBabylonPreloader } from './custom/loading';
-import { ReactRouterNavAdapter } from './routing/adpter';
+import { DefaultBabylonPreloader } from './chrome/loading';
+import { ReactRouterNavAdapter } from './routing/adapter';
 import Home from './pages/Home';
 import './app.css'
 

@@ -1,4 +1,4 @@
-import { babylonLogo } from '../custom/loading';
+import { babylonLogo } from '../chrome/loading';
 import { useUnifiedNavigation } from '../babylon/system/platform';
 import './Home.css'
 
@@ -26,7 +26,7 @@ function Home() {
         </a>
       </main>
       <footer className="splash-footer">
-        <small><a href="https://babylontoolkit.github.io/repo" target="_blank">Babylon Toolkit Prototype Asset Library</a></small>
+        <small><a href="https://babylontoolkit.github.io/repo" target="_blank">Browse The Babylon Toolkit Asset Library</a></small>
       </footer>
     </div>
   )
