@@ -27,7 +27,7 @@ function Home() {
       </main>
 
       <footer className="splash-footer">
-        <small><a href="https://babylontoolkit.com" target="_blank">Babylon Toolkit</a></small>
+        <small><a href="https://babylontoolkit.github.io/repo" target="_blank">Babylon Toolkit Asset Library</a></small>
       </footer>
     </div>
   )
