@@ -1,11 +1,18 @@
+/* Border-box everywhere. Without this, `width: 100%` plus any padding measures
+   100% + padding*2, so a full-width bar pushes its right-hand content past the
+   viewport — and page-level `overflow-x: hidden` would then clip it silently
+   instead of letting a scrollbar reveal the mistake. */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
 html, body {
   width: 100%;
   height: 100%;
   margin: 0;
-  min-width: 100vw;
-  min-height: 100vh;
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
+  min-height: 100dvh;
 }
 
 :root {
