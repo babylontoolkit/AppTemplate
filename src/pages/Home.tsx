@@ -25,6 +25,9 @@ function Home() {
           <img src={babylonLogo} className="splash-logo" alt="Babylon logo" />
         </a>
       </main>
+      <footer className="splash-footer">
+        <small><a href="https://babylontoolkit.com" target="_blank">Babylon Toolkit Game Development</a></small>
+      </footer>      
     </div>
   )
 }
