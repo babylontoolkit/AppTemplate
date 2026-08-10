@@ -5,7 +5,20 @@ import { AbstractEngine, Engine, FreeCamera, Nullable, Observer, Scene, Vector3,
 import { SceneManager } from "@babylonjs-toolkit/next/scenemanager";
 import GameManager from "../globals";
 
-const DEFAULT_ENGINE_OPTIONS = {};
+/**
+ * Default WebGL context attributes.
+ *
+ * `preserveDrawingBuffer: true` keeps the rendered frame readable after the browser composites it,
+ * which is what makes `canvas.toDataURL()` — and therefore any screenshot of the running game —
+ * return the actual frame instead of a fully transparent image. Babylon defaults it to `false`
+ * (`thinEngine`: `if (options.preserveDrawingBuffer === undefined) options.preserveDrawingBuffer = false`),
+ * so without this a screenshot silently succeeds and produces a blank PNG.
+ *
+ * ⚠️ This applies to the WebGL engine ONLY. The WebGPU path below is preferred whenever the browser
+ * supports it, and Babylon's WebGPU engine has no such option — so do not read this as "screenshots
+ * are solved"; on WebGPU that depends on the browser's canvas readback, not on anything set here.
+ */
+const DEFAULT_ENGINE_OPTIONS = { preserveDrawingBuffer: true };
 
 export declare type BabylonjsProps = {
   webgpu?: boolean;
@@ -64,7 +77,14 @@ function BaseSceneViewer(props: BabylonjsProps & React.CanvasHTMLAttributes<HTML
           const canvas = reactCanvas.current;
           if (!canvas) return;
 
-          let engineOptionsToUse = engineOptions != null ? { ...engineOptions } : { ...DEFAULT_ENGINE_OPTIONS };
+          /*
+           * Defaults FIRST, caller's options over the top — so passing `engineOptions` overrides only
+           * the keys it names. The previous form replaced the defaults wholesale, which meant any
+           * project supplying one option (say `{ stencil: true }`) silently lost
+           * `preserveDrawingBuffer` and its screenshots went blank again, for a reason nowhere near
+           * the change that caused it.
+           */
+          let engineOptionsToUse: any = { ...DEFAULT_ENGINE_OPTIONS, ...(engineOptions ?? {}) };
           if (legacyAudio === true) engineOptionsToUse.audioEngine = legacyAudio;
 
           try {
