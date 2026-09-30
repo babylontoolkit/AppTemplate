@@ -1,6 +1,7 @@
 import type { Connect } from "vite";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { isGzipEncodedUrl } from "./gzip-encoding.ts";
 
 // MIME type map for all common web game / media asset extensions.
 // Strips query strings before matching so ?v=123 cache-busters don't break lookups.
@@ -215,7 +216,7 @@ export default defineConfig(({ mode }) => ({
       name: "gzip-response-headers",
       configureServer(server) {
         server.middlewares.use((req: Connect.IncomingMessage, res, next) => {
-          if (req.originalUrl && req.originalUrl.includes(".gz.")) {
+          if (isGzipEncodedUrl(req.originalUrl)) {
             res.setHeader("Content-Encoding", "gzip");
           }
           next();
@@ -223,7 +224,7 @@ export default defineConfig(({ mode }) => ({
       },
       configurePreviewServer(server) {
         server.middlewares.use((req: Connect.IncomingMessage, res, next) => {
-          if (req.originalUrl && req.originalUrl.includes(".gz.")) {
+          if (isGzipEncodedUrl(req.originalUrl)) {
             res.setHeader("Content-Encoding", "gzip");
           }
           next();
