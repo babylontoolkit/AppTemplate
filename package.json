@@ -36,11 +36,12 @@
     "@babylonjs/inspector": "9.28.0",
     "@babylonjs/loaders": "9.28.0",
     "@babylonjs/materials": "9.28.0",
-    "@babylonjs/serializers": "9.28.0"
+    "@babylonjs/serializers": "9.28.0",
+    "rolldown": "1.2.11"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
-    "@rolldown/binding-wasm32-wasi": "1.2.5",
+    "@rolldown/binding-wasm32-wasi": "1.2.11",
     "@types/node": "^24.12.2",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
@@ -54,6 +55,6 @@
     "terser": "^5.43.0",
     "typescript": "^6.0.3",
     "typescript-eslint": "^8.58.2",
-    "vite": "^8.0.10"
+    "vite": "8.3.1"
   }
 }
