@@ -3,6 +3,8 @@ import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { DefaultBabylonPreloader } from './chrome/loading';
 import { ReactRouterNavAdapter } from './routing/adapter';
 import Home from './pages/Home';
+import { ContentInstallerProvider, ContentInstallOffer, ContentUpdateToast } from './chrome/content-installer';
+import { CONTENT_INSTALLER_OPTIONS } from './config/contentInstaller';
 import './app.css'
 
 // Note: All babylon imports stay inside the PlayRoute lazy load chunk
@@ -18,19 +20,25 @@ function appBasename(): string {
 }
 
 function App() {
+  // The content installer (off unless VITE_CONTENT_INSTALLER=on) wraps every route; its toast and installed-app
+  // offer sit beside the router. The installer module itself loads with import() once the page is idle.
   return (
-    <BrowserRouter basename={appBasename()}>
-     <ReactRouterNavAdapter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/play" element={
-          <Suspense fallback={<DefaultBabylonPreloader />}>
-            <PlayRoute />
-          </Suspense>
-        } />
-      </Routes>
-     </ReactRouterNavAdapter>
-    </BrowserRouter>
+    <ContentInstallerProvider options={CONTENT_INSTALLER_OPTIONS}>
+      <BrowserRouter basename={appBasename()}>
+       <ReactRouterNavAdapter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/play" element={
+            <Suspense fallback={<DefaultBabylonPreloader />}>
+              <PlayRoute />
+            </Suspense>
+          } />
+        </Routes>
+       </ReactRouterNavAdapter>
+      </BrowserRouter>
+      <ContentUpdateToast />
+      <ContentInstallOffer />
+    </ContentInstallerProvider>
   )
 }
 

@@ -1,7 +1,22 @@
 import type { Connect } from "vite";
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { createRequire } from "node:module";
 import { isGzipEncodedUrl } from "./gzip-encoding.ts";
+import { contentInstallerPlugin } from "./vite-content-installer.ts";
+
+/**
+ * Finds the content installer's service worker in the toolkit package, or "" when this @babylonjs-toolkit/next has none
+ * (the plugin then warns once and the installer stays off).
+ * @returns The worker's absolute path, or "".
+ */
+function resolveWorkerSource(): string {
+  try {
+    return createRequire(import.meta.url).resolve("@babylonjs-toolkit/next/workers/bt-content-worker.js");
+  } catch {
+    return "";
+  }
+}
 
 // MIME type map for all common web game / media asset extensions.
 // Strips query strings before matching so ?v=123 cache-busters don't break lookups.
@@ -102,6 +117,9 @@ export default defineConfig(({ mode }) => ({
             // eager chunk so it is never emitted into the babylon chunk (which
             // would force the landing/auth entry to import 10MB of Babylon).
             { name: "preload-helper", test: /preload-helper/ },
+            // The content installer loads on Home once the page is idle. It needs only Babylon's dependency-free
+            // Observable, so both get a tiny chunk of their own instead of pulling the 10MB babylon chunk onto Home.
+            { name: "content-installer", test: /[\\/]contentinstaller\.js$|[\\/]@babylonjs[\\/]core[\\/]Misc[\\/]observable(\.pure)?\.js$/ },
             { name: "babylon", test: /babylonjs/ },
             { name: "vendor", test: /node_modules/ },
           ],
@@ -176,6 +194,8 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    // Content installer: serves/emits bt-content-worker.js and writes bt-shell-manifest.json after a build.
+    contentInstallerPlugin({ workerSourcePath: resolveWorkerSource(), excludePatterns: [/\.map$/] }),
     {
       name: "configure-response-headers",
       configureServer: (server) => {

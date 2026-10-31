@@ -1,1 +1,1 @@
-{"root":["./vite.config.ts"],"version":"6.0.3"}
+{"root":["./vite.config.ts","./gzip-encoding.ts","./vite-content-installer.ts"],"version":"6.0.3"}

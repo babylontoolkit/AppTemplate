@@ -14,13 +14,29 @@
 _Top-level structure, entry points, how the app is built and run. How modules are
 organized and depend on each other._
 
-- _(Seed placeholder — replaced on first real content.)_
+- `src/main.tsx` → `src/app.tsx` (router; Home eager, `/play` lazy in the Babylon chunk). `src/babylon/` holds the
+  ReactFramework host (`system/babylon.tsx` scene load, `system/viewer.tsx` engine), `src/chrome/` the ReactFramework
+  chrome (splash, loading, overlay, `content-installer/`). `vite.config.ts` builds with a relative base; Babylon code
+  stays in its own chunk so Home loads none of it.
+- `src/chrome/content-installer/` is a verbatim copy of ReactFramework `chrome/content-installer/` (11 files); its
+  settings live in `src/config/contentInstaller.ts`, and `vite-content-installer.ts` serves/emits the worker and
+  writes `bt-shell-manifest.json` at build.
 
 ## Game Systems  _(current-state — replace/merge)_
 _Each system, its responsibility, and its boundaries (what it owns vs. what it
 delegates). One subsection per system._
 
-- _(Seed placeholder — replaced on first real content.)_
+### Content installer
+
+- **Owns:** offline install and fast loads of the hosted game content. `ContentInstallerProvider` (`src/app.tsx`)
+  loads `@babylonjs-toolkit/next/contentinstaller` with `import()` once Home is idle and initializes it with the content
+  root `<VITE_SCENE_BASE_URL>content-manifest.json` (plus the app shell root `./bt-shell-manifest.json` in production
+  builds). Home's **Install Game** opens `ContentInstallPanel`; `ContentUpdateToast` and `ContentInstallOffer` (standalone
+  launches, once) sit beside the router. `babylon.tsx` calls `prepareContentSceneLoad` before every scene import and
+  posts "Loading from this device" when the scene is installed.
+- **Switches:** off unless `VITE_CONTENT_INSTALLER=on`; off on local hosts unless `VITE_CONTENT_INSTALLER_LOCALHOST=on`.
+- **Boundaries:** the toolkit owns storage, scheduling, updates and the service worker; the layer owns UI and the two
+  calls. Installing is optional; without support, CORS or a manifest the app loads from the network as before.
 
 ## Conventions  _(current-state — replace/merge)_
 _Naming, file/folder organization, script-component patterns, state management,
@@ -29,19 +45,27 @@ styling, error handling, testing patterns actually used in this repo._
 - Prefer ESM imports throughout.
 - Use Babylon Toolkit script component patterns rather than ad-hoc BabylonJS wiring, per the Agent Reference.
 - Keep game systems modular.
+- Home and everything it imports stay Babylon-free: toolkit and Babylon types come in with `import type`, the
+  installer class only through `import()`.
+- Menu-class UI keeps only discrete state in React; download progress is written through refs (`useInstallProgressRefs`)
+  at the installer's 250 ms cadence, with no frame loop, `setInterval` or animation library; toasts enter and exit in CSS.
 
 ## Decisions  _(append-only log)_
 _Architectural decisions and their rationale — the "why", so future features don't
 relitigate settled choices. Append new entries; supersede rather than delete._
 
 - _(Record decisions here as they are made, newest last.)_
+- **Content installer (2026-10-31):** the framework-free installer lives in the toolkit; the React layer is the
+  ReactFramework `chrome/content-installer/` copy, off by default (`VITE_CONTENT_INSTALLER=on`), loaded on idle so Home
+  stays Babylon-free; its UI is unstyled with class hooks. The KTX2 transcoders are self-hosted in `public/scripts`.
 
 ## Dependencies  _(current-state — replace/merge)_
 _Runtime and build dependencies with versions, and why each is here. Nothing new
 lands without an entry._
 
 - **BabylonJS** — engine.
-- **Babylon Toolkit** — Unity-style script components, scene management.
+- **Babylon Toolkit** — Unity-style script components, scene management, and the content installer
+  (`@babylonjs-toolkit/next/contentinstaller`, `workers/bt-content-worker.js`). No new dependency for the installer.
 
 ---
 
