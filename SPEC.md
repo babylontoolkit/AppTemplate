@@ -18,7 +18,7 @@ organized and depend on each other._
   ReactFramework host (`system/babylon.tsx` scene load, `system/viewer.tsx` engine), `src/chrome/` the ReactFramework
   chrome (splash, loading, overlay, `content-installer/`). `vite.config.ts` builds with a relative base; Babylon code
   stays in its own chunk so Home loads none of it.
-- `src/chrome/content-installer/` is a verbatim copy of ReactFramework `chrome/content-installer/` (11 files); its
+- `src/chrome/content-installer/` is a verbatim copy of ReactFramework `chrome/content-installer/` (10 files); its
   settings live in `src/config/contentInstaller.ts`, and `vite-content-installer.ts` serves/emits the worker and
   writes `bt-shell-manifest.json` at build.
 
@@ -31,8 +31,10 @@ delegates). One subsection per system._
 - **Owns:** offline install and fast loads of the hosted game content. `ContentInstallerProvider` (`src/app.tsx`)
   loads `@babylonjs-toolkit/next/contentinstaller` with `import()` once Home is idle and initializes it with the content
   root `<VITE_SCENE_BASE_URL>content-manifest.json` (plus the app shell root `./bt-shell-manifest.json` in production
-  builds). Home's **Install Game** opens `ContentInstallPanel`; `ContentUpdateToast` and `ContentInstallOffer` (standalone
-  launches, once) sit beside the router. `babylon.tsx` calls `prepareContentSceneLoad` before every scene import and
+  builds). Home's **Download** button (**Downloaded ✓** once every file is stored) opens the modal "Download Game Data"
+  dialog holding `ContentInstallPanel` (Not downloaded: Download / Cancel; Downloading: Pause or Resume / Close;
+  Downloaded: Close / Remove, and Remove closes the dialog); `ContentUpdateToast` and `ContentInstallOffer` ("Download the game data to this device",
+  Download / Maybe Later; standalone launches, once) sit beside the router. No player-visible text says "install". `babylon.tsx` calls `prepareContentSceneLoad` before every scene import and
   posts "Loading from this device" when the scene is installed.
 - **Switches:** off unless `VITE_CONTENT_INSTALLER=on`; off on local hosts unless `VITE_CONTENT_INSTALLER_LOCALHOST=on`.
 - **Boundaries:** the toolkit owns storage, scheduling, updates and the service worker; the layer owns UI and the two

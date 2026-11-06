@@ -88,23 +88,27 @@ The Vite bundle services behave differently in devmode than production. To prese
 import { DefaultCameraSystem, DebugInformation, StandardCarController } from "@babylonjs-toolkit/next/project";
 ```
 
-### Content installer (offline install and fast loads)
+### Content installer (game data download, offline play and fast loads)
 
-The app can install its hosted game content on the player's device: the toolkit's `ContentInstaller` and its service
+The app can download its hosted game data to the player's device: the toolkit's `ContentInstaller` and its service
 worker (`bt-content-worker.js`) store every file listed in the export's `content-manifest.json` in browser storage,
 so later loads read it from the device (no network), the game runs offline, and an update downloads only the files
-whose bytes changed. Installing is optional and never a gate: without support, CORS or a manifest the game loads from
+whose bytes changed. Downloading is optional and never a gate: without support, CORS or a manifest the game loads from
 the network exactly as before.
 
 * **The one switch.** Off by default. Add `VITE_CONTENT_INSTALLER=on` to `.env`. The content host is
   `VITE_SCENE_BASE_URL` (default `https://repo.babylontoolkit.com/playground/`); its `content-manifest.json` must be
   served next to the scenes (see the next section). The settings live in `src/config/contentInstaller.ts`.
 * **What you get.** `ContentInstallerProvider` (in `src/app.tsx`) loads the installer once Home is idle — Home never
-  loads Babylon code first. Home shows **Install Game** (the `ContentInstallPanel`: game size, free space, Install
-  everything / Pause / Resume / Remove, progress with speed and time left, each group's status) and **Install App**
-  where the browser offers it ("Tap Share, then Add to Home Screen" on iOS Safari). `ContentUpdateToast` announces new
-  content ("New game content — 34 MB": Update, then Apply at the next scene load) and a new app version (Reload). An
-  installed app (standalone launch) is offered Install everything once (`ContentInstallOffer`). Before every scene
+  loads Babylon code first. Home shows one **Download** button (it reads **Downloaded ✓** once every file of the game
+  data is on the device). It opens the modal "Download Game Data" dialog (`ContentInstallPanel`; Escape closes it):
+  *Not downloaded* — the game data size, what is already on this device and the free space, with Download and Cancel;
+  *Downloading* — progress with percent, size and speed (no time-left estimate), with Pause (Resume while paused) and Close (the
+  download keeps going in the background); *Downloaded* — "All game data is on this device", with Close and Remove (Remove deletes it and closes the dialog).
+  No text the player sees says "install": adding the app to the desktop or home screen is the browser's own option.
+  `ContentUpdateToast` announces new content ("New game content — 34 MB": Update, then Apply at the next scene load)
+  and a new app version (Reload). An installed app (standalone launch) is offered the download once
+  (`ContentInstallOffer`: "Download the game data to this device — 559 MB", Download / Maybe Later). Before every scene
   load `babylon.tsx` calls `prepareContentSceneLoad`; when the scene is on the device the splash reads
   "Loading from this device". The components are unstyled: skin their class hooks (`.content-install-panel__*`,
   `.content-toast*`, `.content-install-offer__*`) in your own CSS.
@@ -164,10 +168,21 @@ CloudFront response headers policy (attach it to the content behaviour; forward 
 }
 ```
 
-The exporter writes `scenes/content-manifest.json` when `Assets/[Config]/assets.json` has
-`"generateContentManifest": true`, when Canvas Tools **Generate Content Manifest** is on, or on a PWA build. To write
-(or back-fill) the manifest of any scenes folder, run `unity command bt_build_content_manifest [--folder <scenes folder>]`,
-then upload it with the content.
+Every successful export — a level, a container, a project build or a Build All — writes the `content-manifest.json`
+of the scenes folder it wrote, with no setting to turn on. **Progressive Web App** in Canvas Tools only turns on
+engine.html's downloader. To rebuild the manifest of any scenes folder, run
+`unity command bt_build_content_manifest [--folder <scenes folder>]`; add `--check true` to compare it with the files
+without writing anything (deploy scripts read `success` from `--format json`; `false` lists the differences).
+
+**Deploy order:**
+
+1. Run the check: `unity command bt_build_content_manifest --check true --folder <scenes folder> --format json`, and
+   stop when `success` is `false`.
+2. Upload the content files.
+3. Upload `content-manifest.json` last.
+4. Invalidate the manifest's path on the CDN (for example `/scenes/content-manifest.json` on CloudFront).
+
+A manifest that arrives before its files, or a stale cached manifest, makes players fetch files that do not match it.
 
 ### Babylon Toolkit Starter Repositories (ES6)
 

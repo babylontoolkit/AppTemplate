@@ -1,19 +1,20 @@
 import { useEffect, type RefObject } from "react";
 import type { IContentInstallProgress } from "@babylonjs-toolkit/next";
+import { formatGraphicsProgress, isGraphicsProgress } from "./contentGraphics";
 import { useContentInstaller } from "./useContentInstaller";
 
-/** The elements install progress is written into; any of them may be left out. */
+/** The elements progress is written into; any of them may be left out. */
 export interface IInstallProgressRefs {
-    /** Bar fill: `style.transform = scaleX(fraction)`, quantized to 0.001 (give it `transform-origin: left`). */
+    /** Bar fill: `style.transform = scaleX(fraction)`, quantized to 0.001 (give it `transform-origin: left`). Both steps. */
     barRef?: RefObject<HTMLElement | null>;
-    /** Percent text, e.g. "42%". */
+    /** Percent text, e.g. "42%". Both steps. */
     percentRef?: RefObject<HTMLElement | null>;
-    /** Downloaded and total size, e.g. "215 / 512 MB". */
+    /** Downloaded and total size, e.g. "215 / 512 MB". Download step only. */
     bytesRef?: RefObject<HTMLElement | null>;
-    /** Download speed, e.g. "8.4 MB/s". */
+    /** Download speed, e.g. "8.4 MB/s". Download step only. */
     speedRef?: RefObject<HTMLElement | null>;
-    /** Time left, e.g. "1:02", or "—" while unknown. */
-    timeLeftRef?: RefObject<HTMLElement | null>;
+    /** The Prepare graphics phase line, e.g. "Preparing graphics — 3 of 18". Graphics step only. */
+    graphicsRef?: RefObject<HTMLElement | null>;
 }
 
 /** Bytes in one megabyte (binary, as the toolkit's loading screens count them). */
@@ -28,10 +29,6 @@ const SMALLEST_SHOWN_BYTES: number = (SMALLEST_SHOWN_MEGABYTES / 2) * BYTES_PER_
 const FRACTION_STEPS: number = 1000;
 /** Fraction steps per whole percent. */
 const STEPS_PER_PERCENT: number = FRACTION_STEPS / 100;
-/** Seconds per minute. */
-const SECONDS_PER_MINUTE: number = 60;
-/** Shown for an unknown time left. */
-const UNKNOWN_TIME_TEXT: string = "—";
 
 /**
  * Formats a byte count as megabytes: one decimal under 100 MB, none from there ("34.2 MB", "512 MB"); a size above
@@ -45,20 +42,21 @@ export function formatMegabytes(bytes: number): string {
 }
 
 /**
- * Formats seconds as minutes and seconds ("1:02"), or "—" when unknown.
- * @param seconds - Seconds left, or null.
- * @returns The text.
+ * Formats downloaded and total size as one readout ("215 / 512 MB").
+ * @param completedBytes - Bytes downloaded.
+ * @param totalBytes - Bytes in all.
+ * @returns The text with its unit.
  */
-export function formatTimeLeft(seconds: number | null): string {
-    if (seconds == null || !Number.isFinite(seconds) || seconds < 0) return UNKNOWN_TIME_TEXT;
-    const wholeSeconds: number = Math.round(seconds);
-    const minutes: number = Math.floor(wholeSeconds / SECONDS_PER_MINUTE);
-    const remainingSeconds: number = wholeSeconds % SECONDS_PER_MINUTE;
-    return `${minutes}:${String(remainingSeconds).padStart(2, "0")}`;
+export function formatProgressBytes(completedBytes: number, totalBytes: number): string {
+    return `${formatMegabyteNumber(completedBytes)} / ${formatMegabytes(totalBytes)}`;
 }
 
 /**
- * Writes install progress into the given elements on each installer progress event (at most every 250 ms, D20/D25).
+ * Writes progress into the given elements on each installer progress event (at most every 250 ms, D20/D25), for both
+ * steps of a download: the files, then Prepare graphics (`phase: "graphics"`), which share the bar and the percent.
+ * The download step writes the sizes and the speed; the graphics step writes only its phase line ("Preparing graphics —
+ * n of N"), so the download readouts keep their last values instead of reading "0 MB".
+ * No time-left estimate is shown: it jumps around too much to be useful (user decision, 2026-10-31).
  * Text goes through `textContent`, the bar through `transform: scaleX()`; a value equal to what the element already
  * shows is not written again, and nothing is written while the page is hidden or the element is not in the document.
  * No React state is touched.
@@ -66,7 +64,7 @@ export function formatTimeLeft(seconds: number | null): string {
  */
 export function useInstallProgressRefs(refs: IInstallProgressRefs): void {
     const { subscribeProgress } = useContentInstaller();
-    const { barRef, percentRef, bytesRef, speedRef, timeLeftRef } = refs;
+    const { barRef, percentRef, bytesRef, speedRef, graphicsRef } = refs;
 
     useEffect(() => {
         return subscribeProgress((progress: IContentInstallProgress) => {
@@ -75,11 +73,14 @@ export function useInstallProgressRefs(refs: IInstallProgressRefs): void {
             const fractionSteps: number = Math.round(Math.min(1, Math.max(0, progress.fraction)) * FRACTION_STEPS);
             writeTransform(barRef?.current, `scaleX(${fractionSteps / FRACTION_STEPS})`);
             writeText(percentRef?.current, `${Math.floor(fractionSteps / STEPS_PER_PERCENT)}%`);
-            writeText(bytesRef?.current, `${formatMegabyteNumber(progress.completedBytes)} / ${formatMegabytes(progress.totalBytes)}`);
+            if (isGraphicsProgress(progress)) {
+                writeText(graphicsRef?.current, formatGraphicsProgress(progress));
+                return;
+            }
+            writeText(bytesRef?.current, formatProgressBytes(progress.completedBytes, progress.totalBytes));
             writeText(speedRef?.current, `${(progress.bytesPerSecond / BYTES_PER_MEGABYTE).toFixed(1)} MB/s`);
-            writeText(timeLeftRef?.current, formatTimeLeft(progress.secondsRemaining));
         });
-    }, [subscribeProgress, barRef, percentRef, bytesRef, speedRef, timeLeftRef]);
+    }, [subscribeProgress, barRef, percentRef, bytesRef, speedRef, graphicsRef]);
 }
 
 /**
