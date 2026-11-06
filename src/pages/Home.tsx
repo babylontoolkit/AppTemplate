@@ -13,6 +13,7 @@ function Home() {
   // The Download button appears only while the content installer runs (VITE_CONTENT_INSTALLER=on and supported here).
   const showDownloadControls: boolean = installerState != null && installerState.availability !== 'disabled';
   const downloadButtonLabel: string = installerState?.everythingInstalled === true ? 'Downloaded ✓' : 'Download';
+  const showDemoControls: boolean = false; // Note: Demo Controls Meant Example Purposes Only
 
   /** Opens the Download Game Data dialog as a modal (Escape closes it). */
   const openDownloadDialog = (): void => {
@@ -54,9 +55,11 @@ function Home() {
           </dialog>
         </section>
       )}
-      <footer className="splash-footer">
-        <small><a href="https://babylontoolkit.com" target="_blank">Babylon Toolkit Game Development</a></small>
-      </footer>
+      {showDemoControls && (
+        <footer className="splash-footer">
+          <small><a href="" onClick={(e) => { e.preventDefault(); handlePlayerDemo(); }} >Player Demo</a></small> | <small><a href="" onClick={(e) => { e.preventDefault(); handleVehicleDemo(); }} >Vehicle Demo</a></small>
+        </footer>
+      )}
     </div>
   )
 }
