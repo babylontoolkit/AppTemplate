@@ -4,6 +4,7 @@ import react from "@vitejs/plugin-react";
 import { createRequire } from "node:module";
 import { isGzipEncodedUrl } from "./gzip-encoding.ts";
 import { contentInstallerPlugin } from "./vite-content-installer.ts";
+import { LOWERCASE_HASH_CHARACTERS, lowercaseAssetFileName, lowercaseChunkFileName, lowercaseEntryFileName, lowercaseOutputGuardPlugin } from "./vite-lowercase-output.ts";
 
 /**
  * Finds the content installer's service worker in the toolkit package, or "" when this @babylonjs-toolkit/next has none
@@ -101,8 +102,11 @@ export default defineConfig(({ mode }) => ({
     sourcemap: false,
     rollupOptions: {
       output: {
-        entryFileNames: "[name].js",
-        assetFileNames: "[name].[ext]",
+        // Every output path is lowercase (vite-lowercase-output.ts): the Unity export lowercases the files it copies.
+        entryFileNames: lowercaseEntryFileName,
+        chunkFileNames: lowercaseChunkFileName,
+        assetFileNames: lowercaseAssetFileName,
+        hashCharacters: LOWERCASE_HASH_CHARACTERS,
         inlineDynamicImports: false,
         // IMPORTANT: Keep all Babylon code in one chunk to ensure the library
         // files are correctly referenced. Remaining third-party code (react,
@@ -196,6 +200,8 @@ export default defineConfig(({ mode }) => ({
     react(),
     // Content installer: serves/emits bt-content-worker.js and writes bt-shell-manifest.json after a build.
     contentInstallerPlugin({ workerSourcePath: resolveWorkerSource(), excludePatterns: [/\.map$/] }),
+    // Fails the build when any output file (bundled or copied from public/) has an uppercase letter in its path.
+    lowercaseOutputGuardPlugin(),
     {
       name: "configure-response-headers",
       configureServer: (server) => {

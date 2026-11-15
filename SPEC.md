@@ -51,6 +51,10 @@ styling, error handling, testing patterns actually used in this repo._
   installer class only through `import()`.
 - Menu-class UI keeps only discrete state in React; download progress is written through refs (`useInstallProgressRefs`)
   at the installer's 250 ms cadence, with no frame loop, `setInterval` or animation library; toasts enter and exit in CSS.
+- Every build output path is lowercase (`vite-lowercase-output.ts`): entries, chunks (hex hashes) and assets are named
+  lowercase, and the build fails if any output file — `public/` included — has an uppercase letter. The Babylon Toolkit
+  Unity export lowercases the files it copies, so a mixed-case name would stop matching the page's request for it. Name
+  new `public/` files and their references in lowercase.
 
 ## Decisions  _(append-only log)_
 _Architectural decisions and their rationale — the "why", so future features don't
