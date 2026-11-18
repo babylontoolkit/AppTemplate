@@ -51,6 +51,12 @@ const MANIFEST_FORMAT = 1;
 const GENERATOR = "vite-content-installer";
 /** System files never listed, wherever they sit (the exporter's manifest leaves them out too, D11). */
 const ALWAYS_EXCLUDED_FILE_NAMES: string[] = [".DS_Store", "Thumbs.db"];
+/**
+ * Unity's import sidecars (`<file>.meta`, `<folder>.meta`). A build written into the Unity asset project (`BUILD_OUT_DIR`
+ * under `Assets/`) gets one beside every file and folder; they are editor data, never uploaded by the exporter's S3
+ * deploy, so listing them made every installer request hundreds of missing files (403 from S3).
+ */
+const UNITY_META_SUFFIX = ".meta";
 /** A file whose last path segment contains this is served gzip encoded (the exporter's rule). */
 const GZIP_MARKER = ".gz.";
 /** Media type of an extension the table does not list. */
@@ -146,6 +152,7 @@ function buildShellManifest(outDir: string, excludePatterns: RegExp[]): IShellMa
     const relativePaths: string[] = listFiles(outDir)
         .filter((relativePath: string) => relativePath !== SHELL_MANIFEST_FILE_NAME)
         .filter((relativePath: string) => !ALWAYS_EXCLUDED_FILE_NAMES.includes(path.posix.basename(relativePath)))
+        .filter((relativePath: string) => !relativePath.endsWith(UNITY_META_SUFFIX))
         .filter((relativePath: string) => !excludePatterns.some((pattern: RegExp) => pattern.test(relativePath)))
         .sort(compareOrdinal);
     const files: Record<string, IShellManifestFile> = {};
